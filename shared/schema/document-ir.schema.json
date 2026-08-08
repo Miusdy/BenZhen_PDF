@@ -1,0 +1,433 @@
+{
+  "$defs": {
+    "BoundingBox": {
+      "properties": {
+        "x0": {
+          "title": "X0",
+          "type": "number"
+        },
+        "y0": {
+          "title": "Y0",
+          "type": "number"
+        },
+        "x1": {
+          "title": "X1",
+          "type": "number"
+        },
+        "y1": {
+          "title": "Y1",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x0",
+        "y0",
+        "x1",
+        "y1"
+      ],
+      "title": "BoundingBox",
+      "type": "object"
+    },
+    "Character": {
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "bbox": {
+          "$ref": "#/$defs/BoundingBox"
+        },
+        "font": {
+          "default": "",
+          "title": "Font",
+          "type": "string"
+        },
+        "size": {
+          "default": 0.0,
+          "title": "Size",
+          "type": "number"
+        },
+        "flags": {
+          "default": 0,
+          "title": "Flags",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "text",
+        "bbox"
+      ],
+      "title": "Character",
+      "type": "object"
+    },
+    "ContentBlock": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "paragraph",
+            "heading",
+            "list",
+            "table",
+            "image",
+            "footnote",
+            "header",
+            "footer"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "text": {
+          "default": "",
+          "title": "Text",
+          "type": "string"
+        },
+        "source_page": {
+          "title": "Source Page",
+          "type": "integer"
+        },
+        "source_bbox": {
+          "$ref": "#/$defs/BoundingBox"
+        },
+        "method": {
+          "$ref": "#/$defs/ExtractionMethod",
+          "default": "none"
+        },
+        "confidence": {
+          "default": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "needs_review": {
+          "default": false,
+          "title": "Needs Review",
+          "type": "boolean"
+        },
+        "review_reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Review Reasons",
+          "type": "array"
+        },
+        "original_text": {
+          "default": "",
+          "title": "Original Text",
+          "type": "string"
+        },
+        "ocr_text": {
+          "default": "",
+          "title": "Ocr Text",
+          "type": "string"
+        },
+        "lines": {
+          "items": {
+            "$ref": "#/$defs/TextLine"
+          },
+          "title": "Lines",
+          "type": "array"
+        },
+        "style": {
+          "additionalProperties": true,
+          "title": "Style",
+          "type": "object"
+        },
+        "table_rows": {
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "Table Rows",
+          "type": "array"
+        },
+        "image_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Image Path"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "source_page",
+        "source_bbox"
+      ],
+      "title": "ContentBlock",
+      "type": "object"
+    },
+    "DocumentMetadata": {
+      "properties": {
+        "input_path": {
+          "title": "Input Path",
+          "type": "string"
+        },
+        "input_name": {
+          "title": "Input Name",
+          "type": "string"
+        },
+        "file_sha256": {
+          "title": "File Sha256",
+          "type": "string"
+        },
+        "total_pages": {
+          "title": "Total Pages",
+          "type": "integer"
+        },
+        "encrypted": {
+          "default": false,
+          "title": "Encrypted",
+          "type": "boolean"
+        },
+        "title": {
+          "default": "",
+          "title": "Title",
+          "type": "string"
+        },
+        "author": {
+          "default": "",
+          "title": "Author",
+          "type": "string"
+        }
+      },
+      "required": [
+        "input_path",
+        "input_name",
+        "file_sha256",
+        "total_pages"
+      ],
+      "title": "DocumentMetadata",
+      "type": "object"
+    },
+    "ExtractionMethod": {
+      "enum": [
+        "pdf_text",
+        "ocr",
+        "reconciled",
+        "none"
+      ],
+      "title": "ExtractionMethod",
+      "type": "string"
+    },
+    "PageKind": {
+      "enum": [
+        "text",
+        "scanned",
+        "mixed",
+        "garbled",
+        "blank"
+      ],
+      "title": "PageKind",
+      "type": "string"
+    },
+    "PageResult": {
+      "properties": {
+        "page_number": {
+          "title": "Page Number",
+          "type": "integer"
+        },
+        "width": {
+          "title": "Width",
+          "type": "number"
+        },
+        "height": {
+          "title": "Height",
+          "type": "number"
+        },
+        "kind": {
+          "$ref": "#/$defs/PageKind"
+        },
+        "quality_score": {
+          "title": "Quality Score",
+          "type": "number"
+        },
+        "quality_reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Quality Reasons",
+          "type": "array"
+        },
+        "blocks": {
+          "items": {
+            "$ref": "#/$defs/ContentBlock"
+          },
+          "title": "Blocks",
+          "type": "array"
+        },
+        "issues": {
+          "items": {
+            "$ref": "#/$defs/ReviewIssue"
+          },
+          "title": "Issues",
+          "type": "array"
+        },
+        "used_ocr": {
+          "default": false,
+          "title": "Used Ocr",
+          "type": "boolean"
+        },
+        "text_character_count": {
+          "default": 0,
+          "title": "Text Character Count",
+          "type": "integer"
+        },
+        "image_count": {
+          "default": 0,
+          "title": "Image Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "page_number",
+        "width",
+        "height",
+        "kind",
+        "quality_score"
+      ],
+      "title": "PageResult",
+      "type": "object"
+    },
+    "ReviewIssue": {
+      "properties": {
+        "issue_type": {
+          "title": "Issue Type",
+          "type": "string"
+        },
+        "severity": {
+          "default": "medium",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "page": {
+          "title": "Page",
+          "type": "integer"
+        },
+        "bbox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoundingBox"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "current_text": {
+          "default": "",
+          "title": "Current Text",
+          "type": "string"
+        },
+        "original_text": {
+          "default": "",
+          "title": "Original Text",
+          "type": "string"
+        },
+        "ocr_text": {
+          "default": "",
+          "title": "Ocr Text",
+          "type": "string"
+        },
+        "confidence": {
+          "default": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "critical_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Critical Fields",
+          "type": "array"
+        }
+      },
+      "required": [
+        "issue_type",
+        "page",
+        "message"
+      ],
+      "title": "ReviewIssue",
+      "type": "object"
+    },
+    "TextLine": {
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "bbox": {
+          "$ref": "#/$defs/BoundingBox"
+        },
+        "characters": {
+          "items": {
+            "$ref": "#/$defs/Character"
+          },
+          "title": "Characters",
+          "type": "array"
+        }
+      },
+      "required": [
+        "text",
+        "bbox"
+      ],
+      "title": "TextLine",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "#/$defs/DocumentMetadata"
+    },
+    "pages": {
+      "items": {
+        "$ref": "#/$defs/PageResult"
+      },
+      "title": "Pages",
+      "type": "array"
+    },
+    "issues": {
+      "items": {
+        "$ref": "#/$defs/ReviewIssue"
+      },
+      "title": "Issues",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "metadata"
+  ],
+  "title": "DocumentIR",
+  "type": "object"
+}

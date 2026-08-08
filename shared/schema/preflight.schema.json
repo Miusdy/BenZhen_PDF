@@ -1,0 +1,58 @@
+{
+  "properties": {
+    "input_path": {
+      "title": "Input Path",
+      "type": "string"
+    },
+    "input_name": {
+      "title": "Input Name",
+      "type": "string"
+    },
+    "file_size": {
+      "title": "File Size",
+      "type": "integer"
+    },
+    "total_pages": {
+      "title": "Total Pages",
+      "type": "integer"
+    },
+    "encrypted": {
+      "title": "Encrypted",
+      "type": "boolean"
+    },
+    "has_text_layer": {
+      "title": "Has Text Layer",
+      "type": "boolean"
+    },
+    "estimated_scan_pages": {
+      "title": "Estimated Scan Pages",
+      "type": "integer"
+    },
+    "estimated_ocr_pages": {
+      "title": "Estimated Ocr Pages",
+      "type": "integer"
+    },
+    "estimated_seconds": {
+      "title": "Estimated Seconds",
+      "type": "integer"
+    },
+    "estimated_temp_bytes": {
+      "title": "Estimated Temp Bytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "input_path",
+    "input_name",
+    "file_size",
+    "total_pages",
+    "encrypted",
+    "has_text_layer",
+    "estimated_scan_pages",
+    "estimated_ocr_pages",
+    "estimated_seconds",
+    "estimated_temp_bytes"
+  ],
+  "title": "PreflightResult",
+  "type": "object"
+}

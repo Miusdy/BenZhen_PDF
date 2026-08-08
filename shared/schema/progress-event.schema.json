@@ -1,0 +1,55 @@
+{
+  "properties": {
+    "type": {
+      "enum": [
+        "progress",
+        "page_complete",
+        "review_issue",
+        "error",
+        "complete"
+      ],
+      "title": "Type",
+      "type": "string"
+    },
+    "job_id": {
+      "title": "Job Id",
+      "type": "string"
+    },
+    "stage": {
+      "title": "Stage",
+      "type": "string"
+    },
+    "current_page": {
+      "default": 0,
+      "title": "Current Page",
+      "type": "integer"
+    },
+    "total_pages": {
+      "default": 0,
+      "title": "Total Pages",
+      "type": "integer"
+    },
+    "progress": {
+      "default": 0.0,
+      "title": "Progress",
+      "type": "number"
+    },
+    "message": {
+      "default": "",
+      "title": "Message",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    }
+  },
+  "required": [
+    "type",
+    "job_id",
+    "stage"
+  ],
+  "title": "ProgressEvent",
+  "type": "object"
+}

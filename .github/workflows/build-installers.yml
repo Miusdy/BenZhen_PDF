@@ -1,0 +1,46 @@
+name: Build unsigned installers
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+          - os: macos-13
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: "${{ matrix.target }}" }
+      - run: python -m venv .venv
+      - run: python -m pip install -e ".[packaging]"
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - name: Verify vendored OCR runtime
+        shell: bash
+        run: test -f "build/vendor/tesseract/${{ matrix.target }}/tessdata/chi_sim.traineddata" && test -f "build/vendor/tesseract/${{ matrix.target }}/tessdata/eng.traineddata"
+      - name: Build sidecar
+        run: .venv/bin/python build/scripts/build_sidecar.py --target "${{ matrix.target }}" --require-ocr
+        if: runner.os != 'Windows'
+      - name: Build sidecar (Windows)
+        run: .venv\Scripts\python.exe build\scripts\build_sidecar.py --target "${{ matrix.target }}" --require-ocr
+        if: runner.os == 'Windows'
+      - run: pnpm tauri build --target "${{ matrix.target }}"
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benzhen-pdf-${{ matrix.target }}-unsigned
+          path: frontend/src-tauri/target/${{ matrix.target }}/release/bundle/**
+

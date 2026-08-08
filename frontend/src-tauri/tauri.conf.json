@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "本真 PDF",
+  "version": "1.0.0",
+  "identifier": "io.github.benzhen.pdf2word",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [{
+      "title": "本真 PDF",
+      "width": 1440,
+      "height": 900,
+      "minWidth": 960,
+      "minHeight": 720,
+      "resizable": true,
+      "fullscreen": false
+    }],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: data:; style-src 'self' 'unsafe-inline'; script-src 'self'",
+      "capabilities": ["main"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "externalBin": ["binaries/pdf2word-sidecar"],
+    "resources": ["resources/tesseract/**/*"],
+    "macOS": { "minimumSystemVersion": "11.0", "signingIdentity": null },
+    "windows": { "wix": { "language": ["zh-CN", "en-US"] } }
+  }
+}

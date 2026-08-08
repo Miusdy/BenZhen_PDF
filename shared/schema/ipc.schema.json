@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/benzhen-pdf/pdf2word/shared/schema/ipc.schema.json",
+  "title": "Benzhen PDF sidecar request",
+  "type": "object",
+  "required": ["command"],
+  "properties": {
+    "request_id": { "type": "string" },
+    "command": { "enum": ["preflight", "start", "pause", "resume", "cancel", "status", "cleanup"] },
+    "job_id": { "type": "string" },
+    "input_path": { "type": "string" },
+    "output_docx": { "type": "string" },
+    "html_report": { "type": "string" },
+    "json_report": { "type": "string" },
+    "password": { "type": ["string", "null"], "writeOnly": true },
+    "config": { "type": "object" },
+    "path": { "type": "string" }
+  },
+  "additionalProperties": true
+}
+
