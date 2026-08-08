@@ -34,8 +34,6 @@ def run_job(job_id: str, request: dict[str, Any], control: JobControl) -> None:
         summary = pipeline.convert(
             Path(request["input_path"]),
             Path(request["output_docx"]),
-            Path(request["html_report"]) if request.get("html_report") else None,
-            Path(request["json_report"]) if request.get("json_report") else None,
         )
         with JOBS_LOCK:
             JOBS[job_id]["status"] = summary.status.value

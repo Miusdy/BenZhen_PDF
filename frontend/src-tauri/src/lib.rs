@@ -96,7 +96,7 @@ async fn request(app: &AppHandle, state: &SidecarState, mut payload: Value) -> R
     receiver.await.map_err(|_| "本地处理引擎未响应".to_string())?
 }
 
-fn safe_output_paths(input_path: &str, output_directory: &str) -> Result<(PathBuf, PathBuf, PathBuf), String> {
+fn safe_output_path(input_path: &str, output_directory: &str) -> Result<PathBuf, String> {
     let input = Path::new(input_path);
     let output = Path::new(output_directory);
     if !input.is_file() || input.extension().and_then(|value| value.to_str()).map(|value| value.eq_ignore_ascii_case("pdf")) != Some(true) {
@@ -106,11 +106,7 @@ fn safe_output_paths(input_path: &str, output_directory: &str) -> Result<(PathBu
         return Err("请选择可访问的输出目录".into());
     }
     let stem = input.file_stem().and_then(|value| value.to_str()).unwrap_or("document");
-    Ok((
-        output.join(format!("{stem}.docx")),
-        output.join(format!("{stem}-report.html")),
-        output.join(format!("{stem}-report.json")),
-    ))
+    Ok(output.join(format!("{stem}.docx")))
 }
 
 #[tauri::command]
@@ -127,14 +123,14 @@ async fn start_conversion(
     password: Option<String>,
     mut config: Value,
 ) -> Result<String, String> {
-    let (docx, html, json_report) = safe_output_paths(&input_path, &output_directory)?;
+    let docx = safe_output_path(&input_path, &output_directory)?;
     if let Some(object) = config.as_object_mut() {
         object.insert("password".into(), json!(password));
     }
     let job_id = Uuid::new_v4().to_string();
     request(&app, &state, json!({
         "command": "start", "job_id": job_id, "input_path": input_path,
-        "output_docx": docx, "html_report": html, "json_report": json_report, "config": config
+        "output_docx": docx, "config": config
     })).await?;
     Ok(job_id)
 }

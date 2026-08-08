@@ -30,7 +30,6 @@ from .ocr_engine import TesseractOcrEngine
 from .page_classifier import classify_page
 from .pdf_reader import PdfReader
 from .reading_order import mark_repeating_headers_and_footers, order_blocks
-from .report_writer import write_html_report, write_json_report
 from .structure_detection import refine_structure
 from .text_quality import score_text
 from .text_reconciliation import reconcile
@@ -330,8 +329,6 @@ class ConversionPipeline:
         self,
         input_path: Path,
         output_docx: Path,
-        html_report: Path | None = None,
-        json_report: Path | None = None,
     ) -> ConversionSummary:
         started = time.monotonic()
         input_path = input_path.expanduser().resolve()
@@ -422,10 +419,6 @@ class ConversionPipeline:
             intermediate_path=str(state_dir) if state_dir.exists() else None,
             error=error,
         )
-        if self.config.generate_html_report and html_report:
-            summary.html_report = str(write_html_report(document, summary, html_report.resolve()))
-        if self.config.generate_json_report and json_report:
-            summary.json_report = str(write_json_report(document, summary, json_report.resolve()))
         self._emit(
             "complete" if status == JobStatus.SUCCESS else "error",
             "complete",
@@ -444,8 +437,6 @@ def convert_pdf(
     input_path: Path,
     output_docx: Path,
     config: ConversionConfig | None = None,
-    html_report: Path | None = None,
-    json_report: Path | None = None,
 ) -> ConversionSummary:
-    return ConversionPipeline(config=config).convert(input_path, output_docx, html_report, json_report)
+    return ConversionPipeline(config=config).convert(input_path, output_docx)
 

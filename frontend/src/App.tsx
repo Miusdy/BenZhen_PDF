@@ -10,7 +10,6 @@ import {
   Pause,
   Play,
   RefreshCcw,
-  SearchCheck,
   ShieldCheck,
   Square,
   Upload,
@@ -27,8 +26,6 @@ const defaultSettings: Settings = {
   maxWorkers: 2,
   keepIntermediate: false,
   markReview: true,
-  htmlReport: true,
-  jsonReport: true,
 };
 
 const initialProgress: ProgressState = {
@@ -59,7 +56,7 @@ function WorkflowRail({ phase }: { phase: JobPhase }) {
         return (
           <div className={`workflow-step ${step === active ? "active" : ""} ${step < active ? "done" : ""}`} key={label}>
             <span className="step-node">{step < active ? <Check size={15} /> : step}</span>
-            <div><strong>{label}</strong><small>{["添加待转换文件", "检查文件和配置", "正在转换为 Word", "查看结果与报告"][index]}</small></div>
+            <div><strong>{label}</strong><small>{["添加待转换文件", "检查文件和配置", "正在转换为 Word", "查看结果"][index]}</small></div>
           </div>
         );
       })}
@@ -82,7 +79,7 @@ function App() {
   const [advancedOpen, setAdvancedOpen] = useState(true);
   const [jobId, setJobId] = useState("");
   const [error, setError] = useState("");
-  const [outputs, setOutputs] = useState({ docx: "", html: "", directory: "" });
+  const [outputs, setOutputs] = useState({ docx: "", directory: "" });
   const fileInput = useRef<HTMLInputElement>(null);
   const demoTimer = useRef<number | null>(null);
   const analysisToken = useRef(0);
@@ -106,7 +103,7 @@ function App() {
       if (message.type === "complete") {
         const payload = (message.payload ?? {}) as Record<string, unknown>;
         setPhase("completed");
-        setOutputs({ docx: String(payload.output_docx ?? ""), html: String(payload.html_report ?? ""), directory: outputDirectory });
+        setOutputs({ docx: String(payload.output_docx ?? ""), directory: outputDirectory });
       }
       if (message.type === "error") {
         setError(String(message.message ?? "转换失败"));
@@ -179,7 +176,7 @@ function App() {
       page += 4;
       const total = preflight?.total_pages ?? 128;
       setProgress((current) => ({ ...current, stage: page > total * 0.25 ? "OCR 识别（语义版面分析）" : "页面分析", currentPage: Math.min(page, total), totalPages: total, progress: Math.min(page / total, 1), message: `正在处理第 ${Math.min(page, total)} 页`, reviewIssues: Math.floor(page / 18), criticalConflicts: Math.floor(page / 52) }));
-      if (page >= total) { if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("completed"); setOutputs({ docx: "", html: "", directory: outputDirectory }); }
+      if (page >= total) { if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("completed"); setOutputs({ docx: "", directory: outputDirectory }); }
     }, 120);
   }
 
@@ -199,7 +196,7 @@ function App() {
     if (command === "cancel") { if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("cancelled"); setProgress((current) => ({ ...current, message: "任务已安全取消" })); }
   }
 
-  function reset() { analysisToken.current += 1; if (fileInput.current) fileInput.current.value = ""; if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("idle"); setInputPath(""); setPreflight(null); setProgress(initialProgress); setOutputs({ docx: "", html: "", directory: "" }); setError(""); }
+  function reset() { analysisToken.current += 1; if (fileInput.current) fileInput.current.value = ""; if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("idle"); setInputPath(""); setPreflight(null); setProgress(initialProgress); setOutputs({ docx: "", directory: "" }); setError(""); }
 
   return (
     <div className="app-shell">
@@ -253,7 +250,7 @@ function App() {
             </section>
           ) : null}
 
-          <section className="output-row"><label>输出目录</label><div className="path-field">{outputDirectory || "选择用于保存 Word 与报告的目录"}</div><button className="secondary" onClick={async () => { const value = await chooseDirectory(); if (value) setOutputDirectory(value); else if (!outputDirectory) setOutputDirectory("本真 PDF 输出"); }}><FolderOpen size={16} />浏览…</button></section>
+          <section className="output-row"><label>输出目录</label><div className="path-field">{outputDirectory || "选择用于保存 Word 的目录"}</div><button className="secondary" onClick={async () => { const value = await chooseDirectory(); if (value) setOutputDirectory(value); else if (!outputDirectory) setOutputDirectory("本真 PDF 输出"); }}><FolderOpen size={16} />浏览…</button></section>
           <section className="password-row"><LockKeyhole size={16} /><label htmlFor="password">PDF 密码</label><input id="password" type="password" value={password} placeholder="仅加密 PDF 需要，不会保存" onChange={(event) => setPassword(event.target.value)} /></section>
           {error ? <div className="error-message"><AlertTriangle size={17} />{error}</div> : null}
           <button className="primary" disabled={!canStart} onClick={() => void begin()}>{phase === "completed" ? <RefreshCcw size={18} /> : <Play size={18} fill="currentColor" />}{startLabel}</button>
@@ -267,7 +264,7 @@ function App() {
             <SettingRow label="渲染 DPI"><select value={settings.dpi} onChange={(event) => updateSetting("dpi", Number(event.target.value))}><option value={200}>200</option><option value={300}>300（推荐）</option><option value={400}>400</option></select></SettingRow>
             <SettingRow label="人工核对阈值"><select value={settings.reviewThreshold} onChange={(event) => updateSetting("reviewThreshold", Number(event.target.value))}><option value={0.75}>75%</option><option value={0.8}>80%（推荐）</option><option value={0.85}>85%</option><option value={0.9}>90%</option></select></SettingRow>
             <SettingRow label="并发处理数"><select value={settings.maxWorkers} onChange={(event) => updateSetting("maxWorkers", Number(event.target.value))}><option value={1}>1</option><option value={2}>2（推荐）</option><option value={4}>4（上限）</option></select></SettingRow>
-            {([["keepIntermediate", "保留中间文件（用于排查问题）"], ["markReview", "在 Word 中标记需要核对的内容"], ["htmlReport", "生成 HTML 报告"], ["jsonReport", "生成 JSON 报告"]] as const).map(([key, label]) => <label className="check-row" key={key}><input type="checkbox" checked={settings[key]} onChange={(event) => updateSetting(key, event.target.checked)} /><span>{label}</span></label>)}
+            {([["keepIntermediate", "保留中间文件（用于排查问题）"], ["markReview", "在 Word 中标记需要核对的内容"]] as const).map(([key, label]) => <label className="check-row" key={key}><input type="checkbox" checked={settings[key]} onChange={(event) => updateSetting(key, event.target.checked)} /><span>{label}</span></label>)}
           </div> : null}
 
           <section className="progress-section">
@@ -278,9 +275,10 @@ function App() {
             <div className="job-controls"><button disabled={phase !== "running"} onClick={() => void control("pause")}><Pause size={16} />暂停</button><button disabled={phase !== "paused"} onClick={() => void control("resume")}><Play size={16} />继续</button><button disabled={!(["running", "paused"] as JobPhase[]).includes(phase)} onClick={() => void control("cancel")}><Square size={14} fill="currentColor" />取消</button></div>
           </section>
 
-          <section className="complete-section"><h2>完成</h2><div className="result-actions">
+          <section className="complete-section"><h2>完成</h2>
+            {phase === "completed" ? <div className="completion-banner"><Check size={22} /><div><strong>转换完成！</strong><span>Word 文件已保存到输出目录</span></div></div> : null}
+            <div className="result-actions">
             <button disabled={phase !== "completed" || !outputs.docx} onClick={() => void openPath(outputs.docx)}><FileOutput /><span>打开 Word</span></button>
-            <button disabled={phase !== "completed" || !outputs.html} onClick={() => void openPath(outputs.html)}><SearchCheck /><span>查看检查报告</span></button>
             <button disabled={phase !== "completed" || !outputs.directory} onClick={() => void openPath(outputs.directory)}><FolderOpen /><span>打开输出目录</span></button>
             <button disabled={!preflight} onClick={() => { setPhase("ready"); setProgress(initialProgress); }}><RefreshCcw /><span>重新转换</span></button>
           </div></section>

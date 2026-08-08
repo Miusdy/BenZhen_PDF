@@ -49,8 +49,6 @@ export async function startJob(inputPath: string, outputDirectory: string, setti
       max_workers: settings.maxWorkers,
       keep_intermediate: settings.keepIntermediate,
       mark_review_in_docx: settings.markReview,
-      generate_html_report: settings.htmlReport,
-      generate_json_report: settings.jsonReport,
     },
   });
 }
