@@ -1,6 +1,6 @@
 [package]
 name = "benzhen-pdf"
-version = "1.0.0"
+version = "1.0.1"
 description = "本真 PDF desktop shell"
 authors = ["Benzhen PDF contributors"]
 license = "Apache-2.0"

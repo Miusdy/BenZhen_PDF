@@ -6,14 +6,14 @@
 
 ## 项目简介
 
-常见的 PDF 转 Word 工具要么依赖云端上传，要么在扫描件、复杂排版和大图片场景中产生明显失真。本真 PDF 提供 Python 转换核心、命令行工具与 Tauri 桌面应用，在“可编辑”和“忠于原文”之间采取保守策略：不猜测、不润色、不静默丢失内容，并通过独立检查报告保留页码、坐标和置信度等追溯信息。
+常见的 PDF 转 Word 工具要么依赖云端上传，要么在扫描件、复杂排版和大图片场景中产生明显失真。本真 PDF 提供 Python 转换核心、命令行工具与 Tauri 桌面应用，在“可编辑”和“忠于原文”之间采取保守策略：不猜测、不润色、不静默丢失内容，转换完成后在前端直接给出完成提示。
 
 ## 功能特点
 
 - **全程本地处理**：PDF、密码、图片、OCR 结果和 Word 文件不离开设备。
 - **多类型 PDF 支持**：自动识别文字页、扫描页、混合页、空白页和加密文件。
 - **内容保真优先**：保留标题、正文、列表、表格、图片与多栏阅读顺序。
-- **干净的 Word 正文**：不在正文后追加 PDF 坐标；追溯信息保留在 JSON/HTML 报告中。
+- **干净的 Word 正文**：不在正文后追加 PDF 页码或坐标等来源标记，转换结果即为可直接编辑的正文。
 - **图片尺寸保护**：图片只会等比缩小到页面可用区域，不会因错误放大产生大量额外页面。
 - **大文件状态反馈**：读取期间提供动画、进度提示和取消操作，避免界面无响应感。
 - **OCR 与质量门禁**：支持 Tesseract 中英文识别，并对低置信度、乱码和冲突内容标记人工核对。
@@ -21,11 +21,11 @@
 
 ## 下载与安装
 
-在 GitHub 的 [Releases](https://github.com/Miusdy/pdf2word/releases) 页面下载对应平台安装包。
+在 GitHub 的 [Releases](https://github.com/Miusdy/BenZhen_PDF/releases) 页面下载对应平台安装包。
 
 当前发布状态：
 
-- macOS Apple Silicon：提供未签名 DMG，需要在系统安全设置中确认打开；
+- **v1.0.1**：macOS Apple Silicon 提供未签名 DMG，需要在系统安全设置中确认打开；
 - macOS Intel、Windows：已提供构建配置，等待对应平台实机验证；
 - OCR 发行包需要按[打包说明](docs/PACKAGING.md)准备 Tesseract 与 `chi_sim`、`eng` 模型。
 
@@ -34,8 +34,8 @@
 要求 Python 3.10 或更高版本。
 
 ```bash
-git clone git@github.com:Miusdy/pdf2word.git
-cd pdf2word
+git clone git@github.com:Miusdy/BenZhen_PDF.git
+cd BenZhen_PDF
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[dev]'
@@ -45,15 +45,6 @@ python -m pip install -e '.[dev]'
 
 ```bash
 pdf2word convert "输入文件.pdf" -o "输出文件.docx"
-```
-
-生成 HTML 与 JSON 检查报告：
-
-```bash
-pdf2word convert "输入文件.pdf" \
-  -o "输出文件.docx" \
-  --report "检查报告.html" \
-  --json-report "检查报告.json"
 ```
 
 快速预检：
@@ -70,8 +61,6 @@ pdf2word preflight "输入文件.pdf"
 --ocr auto|always|never
 --dpi 300
 --review-threshold 0.80
---report output-report.html
---json-report output-report.json
 --keep-intermediate
 --password
 ```
@@ -95,7 +84,7 @@ pnpm tauri dev
 OCR 不可用时：
 
 - 文字型 PDF 仍可正常转换；
-- 必须 OCR 的页面会在报告中标为高风险，不会被静默忽略；
+- 必须 OCR 的页面会在 Word 中标记为需要人工核对，不会被静默忽略；
 - `--ocr always` 不会伪造成功识别内容。
 
 ## 项目结构
@@ -107,7 +96,7 @@ frontend/               React、Vite 与 Tauri 桌面端
 shared/schema/          IR 与 IPC JSON Schema
 build/                  PyInstaller 和跨平台打包脚本
 fixtures/               无隐私测试夹具
-output/examples/        示例 DOCX 与检查报告
+output/examples/        示例转换结果
 docs/                   架构、隐私、打包和限制说明
 ```
 
