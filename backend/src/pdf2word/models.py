@@ -160,7 +160,7 @@ class PreflightResult(BaseModel):
 
 
 class ProgressEvent(BaseModel):
-    type: Literal["progress", "page_complete", "review_issue", "error", "complete"]
+    type: Literal["progress", "page_complete", "review_issue", "error", "cancelled", "complete"]
     job_id: str
     stage: str
     current_page: int = 0

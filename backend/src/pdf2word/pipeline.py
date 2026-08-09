@@ -356,6 +356,7 @@ class ConversionPipeline:
                     self.control.checkpoint()
                     cached = self._load_cached_page(state_dir, digest, index + 1)
                     page = cached or self._process_page(reader, index, state_dir)
+                    self.control.checkpoint()
                     document.pages.append(page)
                     document.issues.extend(page.issues)
                     if cached is None:
@@ -371,6 +372,7 @@ class ConversionPipeline:
                 mark_repeating_headers_and_footers(
                     [page.blocks for page in document.pages], [page.height for page in document.pages]
                 )
+                self.control.checkpoint()
                 write_docx(document, output_docx, self.config.mark_review_in_docx)
                 status = JobStatus.SUCCESS
         except ConversionCancelled as exc:
@@ -419,8 +421,12 @@ class ConversionPipeline:
             intermediate_path=str(state_dir) if state_dir.exists() else None,
             error=error,
         )
+        final_event_type = {
+            JobStatus.SUCCESS: "complete",
+            JobStatus.CANCELLED: "cancelled",
+        }.get(status, "error")
         self._emit(
-            "complete" if status == JobStatus.SUCCESS else "error",
+            final_event_type,
             "complete",
             len(document.pages),
             document.metadata.total_pages,
@@ -439,4 +445,3 @@ def convert_pdf(
     config: ConversionConfig | None = None,
 ) -> ConversionSummary:
     return ConversionPipeline(config=config).convert(input_path, output_docx)
-

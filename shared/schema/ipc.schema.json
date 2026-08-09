@@ -10,12 +10,9 @@
     "job_id": { "type": "string" },
     "input_path": { "type": "string" },
     "output_docx": { "type": "string" },
-    "html_report": { "type": "string" },
-    "json_report": { "type": "string" },
     "password": { "type": ["string", "null"], "writeOnly": true },
     "config": { "type": "object" },
     "path": { "type": "string" }
   },
   "additionalProperties": true
 }
-

@@ -25,9 +25,32 @@
 
 当前发布状态：
 
-- **v1.0.1**：macOS Apple Silicon 提供未签名 DMG，需要在系统安全设置中确认打开；
+- **v1.0.2**：项目采用免费的开源发布方案；macOS 安装包经过完整 ad-hoc 签名，但没有付费 Developer ID 证书和 Apple 公证；
 - macOS Intel、Windows：已提供构建配置，等待对应平台实机验证；
 - OCR 发行包需要按[打包说明](docs/PACKAGING.md)准备 Tesseract 与 `chi_sim`、`eng` 模型。
+
+### macOS 首次打开
+
+由于维护者不使用付费 Apple Developer Program，macOS 会将从 GitHub 下载的应用显示为“无法验证开发者”或阻止首次打开。这不代表安装包损坏。请只从本项目官方 Releases 下载，并按以下步骤操作：
+
+1. 打开 DMG，将“本真 PDF”拖入“应用程序”。
+2. 尝试打开一次应用；被系统阻止后，进入“系统设置 → 隐私与安全性”。
+3. 在安全性区域找到“本真 PDF”，点击“仍要打开”，再次确认“打开”。此后可以正常双击启动。
+
+如果系统仍提示“应用已损坏”，确认下载来源后执行：
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/本真 PDF.app"
+open "/Applications/本真 PDF.app"
+```
+
+该命令会移除 macOS 的下载隔离标记，不要对来源不明的应用使用。每个 macOS 构建产物同时包含 `SHA256SUMS.txt`；将它与 DMG 放在同一目录后可校验下载内容：
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+ad-hoc 签名用于保证应用 bundle 内部代码结构完整，但不能替代 Apple 对付费开发者身份的认证和公证。因此免费版本无法消除上述首次打开确认。
 
 ## 命令行快速开始
 

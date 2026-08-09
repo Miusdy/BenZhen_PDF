@@ -83,11 +83,18 @@ function App() {
   const fileInput = useRef<HTMLInputElement>(null);
   const demoTimer = useRef<number | null>(null);
   const analysisToken = useRef(0);
+  const activeJobId = useRef("");
+  const outputDirectoryRef = useRef("");
 
   useEffect(() => {
-    let dispose: () => void = () => {};
+    outputDirectoryRef.current = outputDirectory;
+  }, [outputDirectory]);
+
+  useEffect(() => {
+    let dispose: (() => void) | undefined;
+    let disposed = false;
     void onSidecarMessage((message) => {
-      if (message.job_id && jobId && message.job_id !== jobId) return;
+      if (message.job_id && message.job_id !== activeJobId.current) return;
       if (message.type === "progress" || message.type === "page_complete") {
         const payload = (message.payload ?? {}) as Record<string, unknown>;
         setProgress((current) => ({
@@ -103,18 +110,32 @@ function App() {
       if (message.type === "complete") {
         const payload = (message.payload ?? {}) as Record<string, unknown>;
         setPhase("completed");
-        setOutputs({ docx: String(payload.output_docx ?? ""), directory: outputDirectory });
+        setOutputs({ docx: String(payload.output_docx ?? ""), directory: outputDirectoryRef.current });
       }
       if (message.type === "error") {
         setError(String(message.message ?? "转换失败"));
         setPhase("failed");
       }
-    }).then((unlisten) => { dispose = unlisten; });
-    return () => { dispose(); if (demoTimer.current) window.clearInterval(demoTimer.current); };
-  }, [jobId, outputDirectory]);
+      if (message.type === "cancelled") {
+        setPhase("cancelled");
+        setProgress((current) => ({ ...current, message: String(message.message ?? "任务已安全取消") }));
+      }
+    }).then((unlisten) => {
+      if (disposed) unlisten(); else dispose = unlisten;
+    });
+    return () => {
+      disposed = true;
+      dispose?.();
+      if (demoTimer.current) window.clearInterval(demoTimer.current);
+    };
+  }, []);
 
   const displayName = preflight?.input_name ?? (inputPath ? inputPath.split(/[\\/]/).pop() : "");
-  const canStart = Boolean(preflight && outputDirectory && phase !== "running");
+  const canStart = Boolean(
+    preflight
+    && outputDirectory
+    && (["ready", "completed", "failed", "cancelled"] as JobPhase[]).includes(phase),
+  );
   const progressPercent = Math.round(progress.progress * 100);
   const startLabel = phase === "completed" ? "重新转换" : "开始转换";
   const isAnalyzing = phase === "preflight" && !preflight;
@@ -183,20 +204,49 @@ function App() {
   async function begin() {
     if (!preflight) return;
     setError("");
-    const created = await startJob(inputPath, outputDirectory, settings, password);
-    if (!created) { runDemo(); return; }
-    setJobId(created); setPhase("running");
+    activeJobId.current = "";
+    setJobId("");
+    setPhase("running");
     setProgress({ ...initialProgress, totalPages: preflight.total_pages, stage: "准备转换", message: "正在启动本地处理引擎" });
+    try {
+      const created = await startJob(inputPath, outputDirectory, settings, password);
+      if (!created) { runDemo(); return; }
+      activeJobId.current = created;
+      setJobId(created);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "无法启动转换");
+      setPhase("failed");
+    }
   }
 
   async function control(command: "pause" | "resume" | "cancel") {
-    if (jobId) await sendCommand({ command, job_id: jobId });
-    if (command === "pause") { if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("paused"); }
-    if (command === "resume") { setPhase("running"); if (!jobId) runDemo(); }
-    if (command === "cancel") { if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("cancelled"); setProgress((current) => ({ ...current, message: "任务已安全取消" })); }
+    try {
+      if (jobId) await sendCommand({ command, job_id: jobId });
+      if (command === "pause") { if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("paused"); }
+      if (command === "resume") { setPhase("running"); if (!jobId) runDemo(); }
+      if (command === "cancel") { if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("cancelled"); setProgress((current) => ({ ...current, message: "任务已安全取消" })); }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "任务控制失败");
+    }
   }
 
-  function reset() { analysisToken.current += 1; if (fileInput.current) fileInput.current.value = ""; if (demoTimer.current) window.clearInterval(demoTimer.current); setPhase("idle"); setInputPath(""); setPreflight(null); setProgress(initialProgress); setOutputs({ docx: "", directory: "" }); setError(""); }
+  function reset() {
+    analysisToken.current += 1;
+    const runningJob = activeJobId.current;
+    activeJobId.current = "";
+    if (runningJob && (phase === "running" || phase === "paused")) {
+      void sendCommand({ command: "cancel", job_id: runningJob }).catch(() => undefined);
+    }
+    if (fileInput.current) fileInput.current.value = "";
+    if (demoTimer.current) window.clearInterval(demoTimer.current);
+    setJobId("");
+    setPhase("idle");
+    setInputPath("");
+    setPreflight(null);
+    setProgress(initialProgress);
+    setOutputs({ docx: "", directory: "" });
+    setError("");
+  }
 
   return (
     <div className="app-shell">

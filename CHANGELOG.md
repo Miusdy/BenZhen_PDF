@@ -1,5 +1,19 @@
 # 更新记录
 
+## 1.0.2 - 2026-08-09
+
+- macOS 改用无需付费 Apple Developer Program 的免费发布方案：所有发布包统一使用完整 ad-hoc 签名，不再要求 Apple 证书或公证 Secrets。
+- README 新增 macOS 首次打开、“仍要打开”、下载隔离处理和 SHA-256 校验说明；未付费公证的应用首次启动仍会显示系统安全提示。
+- 修复 macOS 应用 bundle 仅有残缺 linker 签名、从浏览器下载后被判定为真正签名损坏的问题；构建完成后会验证 bundle 和 DMG，并随 macOS 产物生成 `SHA256SUMS.txt`。
+- 安装包构建会准备并校验可重定位的 Tesseract 中英文 OCR runtime，拒绝生成缺少程序或语言模型的发行包。
+- 修复 pnpm workspace 配置导致前端 CI 无法安装依赖的问题。
+- 修复 Python 3.10 无法导入 `typing.Self` 的兼容性错误。
+- sidecar 异常退出时会清理等待中的请求并允许自动重启，请求增加五分钟超时，并阻止并发任务和非法终态转换，避免界面永久无响应或多个任务争用输出。
+- 修复暂停任务时仍可重复启动、原生命令失败未显示、移除文件后迟到事件污染界面，以及主动取消被误报为失败的问题。
+- 更新 GitHub Actions runner 与 Node runtime，并加入 Tauri 编译测试和 macOS 安装包验收。
+- 修复安装包工作流把依赖装到错误 Python 环境及 Windows target 参数失效的问题；Windows 构建新增 PE 架构、OCR、MSI 与 NSIS 验收。
+- macOS 构建会从所有内嵌 Mach-O 自动推导最低系统版本，正式 CI 拒绝高于 macOS 15 的依赖，避免 OCR 动态库与应用声明的系统兼容范围不一致。
+
 ## 1.0.1 - 2026-08-08
 
 - 移除转换完成后的 JSON/HTML 检查报告生成，转换完成改为前端提示横幅展示，不再向用户输出报告文件。

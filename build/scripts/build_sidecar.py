@@ -6,6 +6,7 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,13 +29,23 @@ def main() -> None:
     vendor = ROOT / "build" / "vendor" / "tesseract" / args.target
     if args.require_ocr:
         tessdata = vendor / "tessdata"
-        expected = [tessdata / "chi_sim.traineddata", tessdata / "eng.traineddata"]
+        executable = vendor / "bin" / ("tesseract.exe" if "windows" in args.target else "tesseract")
+        expected = [executable, tessdata / "chi_sim.traineddata", tessdata / "eng.traineddata"]
         if not all(path.exists() for path in expected):
-            raise SystemExit(f"Missing OCR models under {tessdata}")
+            missing = ", ".join(str(path) for path in expected if not path.exists())
+            raise SystemExit(f"Missing OCR runtime files: {missing}")
     build_environment = dict(os.environ)
     build_environment["PDF2WORD_VENDOR_TARGET"] = args.target
+    build_environment["PYINSTALLER_CONFIG_DIR"] = str(ROOT / ".pyinstaller-cache")
     subprocess.run(
-        [str(ROOT / ".venv" / "bin" / "pyinstaller"), "--clean", "--noconfirm", str(ROOT / "build/pyinstaller/pdf2word-sidecar.spec")],
+        [
+            sys.executable,
+            "-m",
+            "PyInstaller",
+            "--clean",
+            "--noconfirm",
+            str(ROOT / "build/pyinstaller/pdf2word-sidecar.spec"),
+        ],
         cwd=ROOT,
         env=build_environment,
         check=True,
