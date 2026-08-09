@@ -54,7 +54,7 @@ bash build/scripts/build_macos.sh x86_64-apple-darwin
 
 ad-hoc 签名只能验证 bundle 内部代码结构，不能向 Gatekeeper 证明开发者身份，也不能提交 Apple 公证。从 GitHub 下载后，用户必须按 README 在“隐私与安全性”中选择“仍要打开”。发布者不得把该产物描述为 Apple 已认证或已公证。
 
-`macos_bundle_config.py` 会扫描 OCR runtime、sidecar 及 PyInstaller 收集清单中的 Mach-O deployment target，生成实际的 `minimumSystemVersion` 配置。正式 GitHub 构建的上限为 macOS 15.0；任何依赖要求更高版本都会阻止上传，避免应用在旧系统安装后才于 OCR 阶段崩溃。
+`macos_bundle_config.py` 会扫描 OCR runtime、sidecar 及 PyInstaller 收集清单中的 Mach-O deployment target，生成实际的 `minimumSystemVersion` 配置。正式 GitHub 构建只接受 macOS 15.x 依赖；任何依赖要求 macOS 16 或更高版本都会阻止上传，避免应用在旧系统安装后才于 OCR 阶段崩溃。
 
 构建后执行以下验收：
 
