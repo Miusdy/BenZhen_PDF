@@ -41,6 +41,6 @@
       "signingIdentity": "-",
       "hardenedRuntime": false
     },
-    "windows": { "wix": { "language": ["zh-CN", "en-US"] } }
+    "windows": { "wix": { "language": "zh-CN" } }
   }
 }
