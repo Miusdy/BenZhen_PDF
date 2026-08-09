@@ -30,7 +30,6 @@ from .ocr_engine import TesseractOcrEngine
 from .page_classifier import classify_page
 from .pdf_reader import PdfReader
 from .reading_order import mark_repeating_headers_and_footers, order_blocks
-from .report_writer import write_html_report, write_json_report
 from .structure_detection import refine_structure
 from .text_quality import score_text
 from .text_reconciliation import reconcile
@@ -330,8 +329,6 @@ class ConversionPipeline:
         self,
         input_path: Path,
         output_docx: Path,
-        html_report: Path | None = None,
-        json_report: Path | None = None,
     ) -> ConversionSummary:
         started = time.monotonic()
         input_path = input_path.expanduser().resolve()
@@ -359,6 +356,7 @@ class ConversionPipeline:
                     self.control.checkpoint()
                     cached = self._load_cached_page(state_dir, digest, index + 1)
                     page = cached or self._process_page(reader, index, state_dir)
+                    self.control.checkpoint()
                     document.pages.append(page)
                     document.issues.extend(page.issues)
                     if cached is None:
@@ -374,6 +372,7 @@ class ConversionPipeline:
                 mark_repeating_headers_and_footers(
                     [page.blocks for page in document.pages], [page.height for page in document.pages]
                 )
+                self.control.checkpoint()
                 write_docx(document, output_docx, self.config.mark_review_in_docx)
                 status = JobStatus.SUCCESS
         except ConversionCancelled as exc:
@@ -422,12 +421,12 @@ class ConversionPipeline:
             intermediate_path=str(state_dir) if state_dir.exists() else None,
             error=error,
         )
-        if self.config.generate_html_report and html_report:
-            summary.html_report = str(write_html_report(document, summary, html_report.resolve()))
-        if self.config.generate_json_report and json_report:
-            summary.json_report = str(write_json_report(document, summary, json_report.resolve()))
+        final_event_type = {
+            JobStatus.SUCCESS: "complete",
+            JobStatus.CANCELLED: "cancelled",
+        }.get(status, "error")
         self._emit(
-            "complete" if status == JobStatus.SUCCESS else "error",
+            final_event_type,
             "complete",
             len(document.pages),
             document.metadata.total_pages,
@@ -444,8 +443,5 @@ def convert_pdf(
     input_path: Path,
     output_docx: Path,
     config: ConversionConfig | None = None,
-    html_report: Path | None = None,
-    json_report: Path | None = None,
 ) -> ConversionSummary:
-    return ConversionPipeline(config=config).convert(input_path, output_docx, html_report, json_report)
-
+    return ConversionPipeline(config=config).convert(input_path, output_docx)

@@ -48,8 +48,6 @@ def convert(
     review_threshold: Annotated[
         float, typer.Option("--review-threshold", min=0.0, max=1.0)
     ] = 0.80,
-    report: Annotated[Path | None, typer.Option("--report")] = None,
-    json_report: Annotated[Path | None, typer.Option("--json-report")] = None,
     keep_intermediate: Annotated[bool, typer.Option("--keep-intermediate")] = False,
     password: Annotated[
         str | None, typer.Option("--password", prompt=False, hide_input=True, help="PDF 密码")
@@ -58,8 +56,6 @@ def convert(
 ) -> None:
     """将 INPUT_PDF 转换为可编辑 DOCX。"""
     logging.basicConfig(level=logging.WARNING if quiet else logging.INFO)
-    report = report or output.with_name(output.stem + "-report.html")
-    json_report = json_report or output.with_name(output.stem + "-report.json")
 
     def progress(event: ProgressEvent) -> None:
         if not quiet and event.type in {"progress", "page_complete"}:
@@ -75,7 +71,7 @@ def convert(
         password=password,
     )
     summary = ConversionPipeline(config=config, progress=progress).convert(
-        input_pdf, output, report, json_report
+        input_pdf, output
     )
     typer.echo(json.dumps(summary.model_dump(mode="json"), ensure_ascii=False, indent=2))
     if summary.status != JobStatus.SUCCESS:

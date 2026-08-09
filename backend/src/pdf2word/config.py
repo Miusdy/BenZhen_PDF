@@ -28,8 +28,6 @@ class ConversionConfig(BaseModel):
     max_workers: int = Field(default=2, ge=1, le=4)
     keep_intermediate: bool = False
     mark_review_in_docx: bool = True
-    generate_html_report: bool = True
-    generate_json_report: bool = True
     preserve_images: bool = True
     detect_tables: bool = True
     temp_dir: Path | None = None

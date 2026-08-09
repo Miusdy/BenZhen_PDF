@@ -21,8 +21,6 @@ export interface Settings {
   maxWorkers: number;
   keepIntermediate: boolean;
   markReview: boolean;
-  htmlReport: boolean;
-  jsonReport: boolean;
 }
 
 export interface ProgressState {

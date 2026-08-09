@@ -1,6 +1,6 @@
 [package]
 name = "benzhen-pdf"
-version = "1.0.0"
+version = "1.0.2"
 description = "本真 PDF desktop shell"
 authors = ["Benzhen PDF contributors"]
 license = "Apache-2.0"
@@ -20,5 +20,5 @@ tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["sync"] }
+tokio = { version = "1", features = ["macros", "rt", "sync", "time"] }
 uuid = { version = "1", features = ["v4"] }

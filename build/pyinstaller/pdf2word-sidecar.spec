@@ -5,6 +5,9 @@ from pathlib import Path
 project_root = Path(SPECPATH).parents[1]
 vendor_target = os.environ.get("PDF2WORD_VENDOR_TARGET", "")
 vendor_root = project_root / "build" / "vendor" / "tesseract" / vendor_target
+signing_identity = os.environ.get("APPLE_SIGNING_IDENTITY")
+if signing_identity in {None, "", "-"}:
+    signing_identity = None
 datas = []
 binaries = []
 
@@ -40,4 +43,5 @@ exe = EXE(
     strip=False,
     upx=False,
     console=True,
+    codesign_identity=signing_identity,
 )

@@ -15,6 +15,13 @@ from .pipeline import ConversionPipeline, JobControl, preflight_pdf
 WRITE_LOCK = threading.Lock()
 JOBS_LOCK = threading.Lock()
 JOBS: dict[str, dict[str, Any]] = {}
+ACTIVE_JOB_STATUSES = {"running", "paused", "cancelling"}
+TERMINAL_JOB_STATUSES = {"success", "failed", "cancelled"}
+COMMAND_SOURCE_STATUSES = {
+    "pause": {"running"},
+    "resume": {"paused"},
+    "cancel": {"running", "paused"},
+}
 
 
 def emit(message: dict[str, object]) -> None:
@@ -27,6 +34,13 @@ def on_progress(event: ProgressEvent) -> None:
     emit(event.model_dump(mode="json"))
 
 
+def active_job_id() -> str | None:
+    return next(
+        (job_id for job_id, job in JOBS.items() if job.get("status") in ACTIVE_JOB_STATUSES),
+        None,
+    )
+
+
 def run_job(job_id: str, request: dict[str, Any], control: JobControl) -> None:
     try:
         config = ConversionConfig.model_validate(request.get("config", {}))
@@ -34,8 +48,6 @@ def run_job(job_id: str, request: dict[str, Any], control: JobControl) -> None:
         summary = pipeline.convert(
             Path(request["input_path"]),
             Path(request["output_docx"]),
-            Path(request["html_report"]) if request.get("html_report") else None,
-            Path(request["json_report"]) if request.get("json_report") else None,
         )
         with JOBS_LOCK:
             JOBS[job_id]["status"] = summary.status.value
@@ -60,27 +72,38 @@ def handle(request: dict[str, Any]) -> None:
             control = JobControl()
             thread = threading.Thread(target=run_job, args=(job_id, request, control), daemon=True)
             with JOBS_LOCK:
+                active = active_job_id()
+                if active:
+                    raise RuntimeError(f"已有任务正在运行：{active}")
                 JOBS[job_id] = {"status": "running", "control": control, "thread": thread}
             thread.start()
             emit({"type": "response", "request_id": request_id, "ok": True, "job_id": job_id})
             return
         job_id = str(request.get("job_id", ""))
-        with JOBS_LOCK:
-            job = JOBS.get(job_id)
         if command in {"pause", "resume", "cancel", "status"}:
-            if not job:
-                raise KeyError("任务不存在")
-            control = job["control"]
-            if command == "pause":
-                control.pause()
-                job["status"] = "paused"
-            elif command == "resume":
-                control.resume()
-                job["status"] = "running"
-            elif command == "cancel":
-                control.cancel()
-                job["status"] = "cancelling"
-            data = {key: value for key, value in job.items() if key not in {"control", "thread"}}
+            with JOBS_LOCK:
+                job = JOBS.get(job_id)
+                if not job:
+                    raise KeyError("任务不存在")
+                status = str(job.get("status", ""))
+                if command != "status" and status in TERMINAL_JOB_STATUSES:
+                    raise RuntimeError(f"任务已结束，当前状态：{status}")
+                allowed_statuses = COMMAND_SOURCE_STATUSES.get(str(command))
+                if allowed_statuses is not None and status not in allowed_statuses:
+                    raise RuntimeError(f"无法在 {status} 状态执行 {command}")
+                control = job["control"]
+                if command == "pause":
+                    control.pause()
+                    job["status"] = "paused"
+                elif command == "resume":
+                    control.resume()
+                    job["status"] = "running"
+                elif command == "cancel":
+                    control.cancel()
+                    job["status"] = "cancelling"
+                data = {
+                    key: value for key, value in job.items() if key not in {"control", "thread"}
+                }
             emit({"type": "response", "request_id": request_id, "ok": True, "job_id": job_id, "data": data})
             return
         if command == "cleanup":

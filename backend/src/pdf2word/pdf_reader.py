@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import io
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Any, Literal
 
 import pymupdf as fitz
 from PIL import Image
+from typing_extensions import Self
 
 from .errors import EncryptedPdfError, Pdf2WordError
 from .models import BoundingBox, Character, ContentBlock, ExtractionMethod, TextLine

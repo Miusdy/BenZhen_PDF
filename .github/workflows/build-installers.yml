@@ -1,46 +1,114 @@
-name: Build unsigned installers
+name: Build free installers
 on:
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     strategy:
       matrix:
         include:
-          - os: macos-14
+          - os: macos-15
             target: aarch64-apple-darwin
-          - os: macos-13
+            artifact: benzhen-pdf-macos-apple-silicon-ad-hoc
+          - os: macos-15-intel
             target: x86_64-apple-darwin
+            artifact: benzhen-pdf-macos-intel-ad-hoc
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            artifact: benzhen-pdf-windows-x64-unsigned
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with: { python-version: "3.12" }
       - uses: pnpm/action-setup@v4
         with: { version: 9 }
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
       - uses: dtolnay/rust-toolchain@stable
         with: { targets: "${{ matrix.target }}" }
       - run: python -m venv .venv
-      - run: python -m pip install -e ".[packaging]"
+      - name: Install Python packaging dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: .venv/bin/python -m pip install -e ".[packaging]"
+      - name: Install Python packaging dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .venv\Scripts\python.exe -m pip install -e ".[packaging]"
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
-      - name: Verify vendored OCR runtime
-        shell: bash
-        run: test -f "build/vendor/tesseract/${{ matrix.target }}/tessdata/chi_sim.traineddata" && test -f "build/vendor/tesseract/${{ matrix.target }}/tessdata/eng.traineddata"
-      - name: Build sidecar
-        run: .venv/bin/python build/scripts/build_sidecar.py --target "${{ matrix.target }}" --require-ocr
-        if: runner.os != 'Windows'
-      - name: Build sidecar (Windows)
-        run: .venv\Scripts\python.exe build\scripts\build_sidecar.py --target "${{ matrix.target }}" --require-ocr
+      - name: Install OCR runtime (macOS)
+        if: runner.os == 'macOS'
+        run: brew install tesseract tesseract-lang
+      - name: Stage relocatable OCR runtime (macOS)
+        if: runner.os == 'macOS'
+        run: >-
+          .venv/bin/python build/scripts/prepare_ocr_vendor.py
+          --target "${{ matrix.target }}"
+          --tesseract "$(brew --prefix tesseract)/bin/tesseract"
+          --tessdata-dir "$(brew --prefix tesseract)/share/tessdata"
+          --tessdata-dir "$(brew --prefix tesseract-lang)/share/tessdata"
+      - name: Install OCR runtime (Windows)
         if: runner.os == 'Windows'
-      - run: pnpm tauri build --target "${{ matrix.target }}"
-        working-directory: frontend
+        shell: pwsh
+        run: choco install tesseract --yes --no-progress
+      - name: Download pinned OCR language models (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $Tessdata = Join-Path $env:RUNNER_TEMP "tessdata"
+          New-Item -ItemType Directory -Force $Tessdata | Out-Null
+          $Commit = "65727574dfcd264acbb0c3e07860e4e9e9b22185"
+          $Models = @{
+            "chi_sim.traineddata" = "a5fcb6f0db1e1d6d8522f39db4e848f05984669172e584e8d76b6b3141e1f730"
+            "eng.traineddata" = "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2"
+          }
+          foreach ($Model in $Models.GetEnumerator()) {
+            $Destination = Join-Path $Tessdata $Model.Key
+            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/$Commit/$($Model.Key)" -OutFile $Destination
+            $Actual = (Get-FileHash -Algorithm SHA256 $Destination).Hash.ToLowerInvariant()
+            if ($Actual -ne $Model.Value) { throw "SHA-256 mismatch for $($Model.Key): $Actual" }
+          }
+      - name: Stage relocatable OCR runtime (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >-
+          .venv\Scripts\python.exe build\scripts\prepare_ocr_vendor.py
+          --target "${{ matrix.target }}"
+          --tesseract "C:\Program Files\Tesseract-OCR\tesseract.exe"
+          --tessdata-dir "$env:RUNNER_TEMP\tessdata"
+      - name: Build macOS installer
+        if: runner.os == 'macOS'
+        env:
+          BENZHEN_MAXIMUM_MACOS: "15.0"
+        run: bash build/scripts/build_macos.sh "${{ matrix.target }}"
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: build\scripts\build_windows.ps1 "${{ matrix.target }}"
+      - name: Verify Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: build\scripts\verify_windows_bundle.ps1 "${{ matrix.target }}"
+      - name: Verify macOS installer
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          APP_PATH=$(find "frontend/src-tauri/target/${{ matrix.target }}/release/bundle/macos" -maxdepth 1 -name '*.app' -print -quit)
+          DMG_PATH=$(find "frontend/src-tauri/target/${{ matrix.target }}/release/bundle/dmg" -maxdepth 1 -name '*.dmg' -print -quit)
+          bash build/scripts/verify_macos_bundle.sh "$APP_PATH" "$DMG_PATH"
+      - name: Generate macOS SHA-256 checksum
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          BUNDLE_ROOT="frontend/src-tauri/target/${{ matrix.target }}/release/bundle"
+          DMG_PATH=$(find "$BUNDLE_ROOT/dmg" -maxdepth 1 -name '*.dmg' -print -quit)
+          test -n "$DMG_PATH"
+          (cd "$(dirname "$DMG_PATH")" && shasum -a 256 "$(basename "$DMG_PATH")") > "$(dirname "$DMG_PATH")/SHA256SUMS.txt"
       - uses: actions/upload-artifact@v4
         with:
-          name: benzhen-pdf-${{ matrix.target }}-unsigned
+          name: ${{ matrix.artifact }}
           path: frontend/src-tauri/target/${{ matrix.target }}/release/bundle/**
-

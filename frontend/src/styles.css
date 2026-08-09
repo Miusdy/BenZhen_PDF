@@ -69,16 +69,19 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .drop-zone:hover .file-glyph { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(7,139,143,.17); }
 .drop-zone h1 { margin: 0 0 8px; color: var(--teal); font-size: 25px; font-weight: 600; }
 .drop-zone p { margin: 0 0 22px; color: #7c8596; font-size: 13px; }
-button { border: 1px solid var(--line); background: white; border-radius: 7px; min-height: 38px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: border-color .2s, background .2s, transform .2s cubic-bezier(.2,.75,.25,1), box-shadow .2s; }
-button::after { content: ""; position: absolute; z-index: -1; top: -120%; left: -35%; width: 28%; height: 340%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.58), transparent); transform: rotate(20deg) translateX(-260%); transition: transform .55s ease; }
-button:hover:not(:disabled) { border-color: #8fbfc2; background: #fbfefe; transform: translateY(-2px); box-shadow: 0 10px 24px rgba(16,38,58,.09); }
+button { border: 1px solid var(--line); background: white; border-radius: 7px; min-height: 38px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: border-color .3s ease, background .3s ease, color .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s cubic-bezier(.25,.46,.45,.94); }
+button::after { content: ""; position: absolute; z-index: -1; top: -120%; left: -35%; width: 28%; height: 340%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.58), transparent); transform: rotate(20deg) translateX(-260%); transition: transform .7s cubic-bezier(.25,.46,.45,.94); }
+button:hover:not(:disabled) { border-color: #8fbfc2; background: #fbfefe; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(16,38,58,.08); }
 button:hover:not(:disabled)::after { transform: rotate(20deg) translateX(680%); }
-button:active:not(:disabled) { transform: translateY(0) scale(.985); }
+button:active:not(:disabled) { transform: translateY(0) scale(.97); box-shadow: 0 4px 12px rgba(16,38,58,.06); transition: transform .12s ease, box-shadow .12s ease; }
 button:disabled { cursor: not-allowed; color: #a9b0bc; background: #f4f5f7; }
 .secondary { padding: 0 16px; }
-.secondary.prominent { color: var(--teal); border-color: var(--teal); min-width: 142px; background: rgba(255,255,255,.92); box-shadow: 0 7px 22px rgba(7,139,143,.08); }
-.primary { width: min(360px, 80%); min-height: 50px; margin: 18px auto 0; border: 0; border-radius: 8px; display: flex; color: white; background: linear-gradient(105deg, #04787f, #079ba1 48%, #21aeb1); font-weight: 650; font-size: 16px; box-shadow: 0 10px 28px rgba(7,138,146,.25), 0 0 0 0 rgba(94,196,199,.28); animation: primary-breathe 3.6s ease-in-out infinite; }
-.primary:hover:not(:disabled) { background: linear-gradient(90deg, #05767d, #078b92); }
+.secondary.prominent { color: var(--teal); border-color: var(--teal); min-width: 142px; background: rgba(255,255,255,.92); box-shadow: 0 7px 22px rgba(7,139,143,.08); transition: border-color .3s ease, background .3s ease, color .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s cubic-bezier(.25,.46,.45,.94); }
+.secondary.prominent:hover:not(:disabled) { background: var(--teal-soft); border-color: var(--teal-dark); box-shadow: 0 10px 26px rgba(7,139,143,.14); }
+.secondary.prominent:active:not(:disabled) { transform: translateY(0) scale(.97); transition: transform .12s ease; }
+.primary { width: min(360px, 80%); min-height: 50px; margin: 18px auto 0; border: 0; border-radius: 8px; display: flex; color: white; background: linear-gradient(105deg, #04787f, #079ba1 48%, #21aeb1); font-weight: 650; font-size: 16px; box-shadow: 0 10px 28px rgba(7,138,146,.25), 0 0 0 0 rgba(94,196,199,.28); animation: primary-breathe 3.6s ease-in-out infinite; transition: background .4s ease, transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s ease; }
+.primary:hover:not(:disabled) { background: linear-gradient(90deg, #05767d, #078b92); transform: translateY(-1px); box-shadow: 0 14px 34px rgba(7,138,146,.3), 0 0 0 0 rgba(94,196,199,.28); }
+.primary:active:not(:disabled) { transform: translateY(0) scale(.98); transition: transform .12s ease; }
 .primary:disabled { color: #fff; background: #a8c8ca; box-shadow: none; }
 
 .preflight-panel { margin-top: 14px; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: rgba(255,255,255,.96); box-shadow: 0 13px 34px rgba(16,38,58,.045); animation: panel-arrive .42s cubic-bezier(.2,.75,.25,1) both; }
@@ -112,6 +115,10 @@ button:disabled { cursor: not-allowed; color: #a9b0bc; background: #f4f5f7; }
 .check-row input { width: 15px; height: 15px; accent-color: var(--teal); }
 .progress-section, .complete-section { border-bottom: 1px solid var(--line); padding: 18px 20px 20px; }
 .progress-section h2, .complete-section h2 { margin: 0 0 16px; font-size: 14px; }
+.completion-banner { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-bottom: 16px; border-radius: 8px; background: linear-gradient(135deg, #e8f8f0, #f0fdf4); border: 1px solid #b8e6cc; animation: panel-arrive .45s cubic-bezier(.25,.46,.45,.94) both; }
+.completion-banner svg { color: #1faa61; flex-shrink: 0; }
+.completion-banner strong { display: block; font-size: 14px; color: #15803d; }
+.completion-banner span { font-size: 12px; color: #4a7c5e; }
 .progress-section dl { margin: 0; }
 .progress-section dl > div { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 12px; }
 .progress-section dt { color: var(--muted); }
@@ -127,7 +134,7 @@ button:disabled { cursor: not-allowed; color: #a9b0bc; background: #f4f5f7; }
 .risk-grid strong { display: block; color: var(--ink); font-size: 18px; margin-top: 2px; }
 .job-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .job-controls button { font-size: 12px; }
-.result-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.result-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .result-actions button { min-width: 0; min-height: 75px; flex-direction: column; font-size: 10px; }
 .result-actions svg { width: 22px; color: #2b7dc3; }
 

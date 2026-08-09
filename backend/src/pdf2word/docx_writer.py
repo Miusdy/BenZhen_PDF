@@ -141,10 +141,6 @@ def write_docx(document_ir: DocumentIR, output: Path, mark_review: bool = True) 
     for page_index, page in enumerate(document_ir.pages):
         if page_index:
             document.add_section(WD_SECTION.NEW_PAGE)
-        marker = document.add_paragraph()
-        page_run = marker.add_run(f"— 原 PDF 第 {page.page_number} 页 —")
-        _set_run_font(page_run, Pt(8))
-        page_run.font.color.rgb = RGBColor(95, 105, 120)
         for block in page.blocks:
             if block.type in {"header", "footer"}:
                 continue

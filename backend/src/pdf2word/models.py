@@ -142,8 +142,6 @@ class ConversionSummary(BaseModel):
     status: JobStatus
     quality_gate_passed: bool
     output_docx: str | None = None
-    html_report: str | None = None
-    json_report: str | None = None
     intermediate_path: str | None = None
     error: str | None = None
 
@@ -162,7 +160,7 @@ class PreflightResult(BaseModel):
 
 
 class ProgressEvent(BaseModel):
-    type: Literal["progress", "page_complete", "review_issue", "error", "complete"]
+    type: Literal["progress", "page_complete", "review_issue", "error", "cancelled", "complete"]
     job_id: str
     stage: str
     current_page: int = 0

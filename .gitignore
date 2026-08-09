@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.pyinstaller-cache/
 .pnpm-store/
 htmlcov/
 .coverage
@@ -19,6 +20,8 @@ frontend/vite.config.d.ts
 frontend/src-tauri/target/
 frontend/src-tauri/gen/
 frontend/src-tauri/binaries/pdf2word-sidecar-*
+frontend/src-tauri/resources/tesseract/*
+!frontend/src-tauri/resources/tesseract/README.txt
 *.partial
 .pdf2word-state/
 tmp/
