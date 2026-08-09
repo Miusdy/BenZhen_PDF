@@ -14,6 +14,7 @@
 - 修复安装包工作流把依赖装到错误 Python 环境及 Windows target 参数失效的问题；Windows 构建新增 PE 架构、OCR、MSI 与 NSIS 验收。
 - macOS 构建会从所有内嵌 Mach-O 自动推导最低系统版本，正式 CI 拒绝要求 macOS 16 或更高版本的依赖，避免 OCR 动态库与应用声明的系统兼容范围不一致。
 - 修复 GitHub macOS runner 的 Homebrew 第三方 tap 信任冲突；安装包矩阵改为各平台独立完成，单个平台失败不会取消其他平台。
+- 修复 Windows WiX/NSIS 打包未显式指定 `.ico` 图标导致安装器构建失败的问题。
 
 ## 1.0.1 - 2026-08-08
 
