@@ -26,6 +26,7 @@
 当前发布状态：
 
 - **v1.0.2**：项目采用免费的开源发布方案；macOS 安装包经过完整 ad-hoc 签名，但没有付费 Developer ID 证书和 Apple 公证；
+- macOS 发行包要求 macOS 15；构建会根据内嵌 OCR runtime 自动写入精确的小版本要求，不能在更旧系统安装；
 - macOS Intel、Windows：已提供构建配置，等待对应平台实机验证；
 - OCR 发行包需要按[打包说明](docs/PACKAGING.md)准备 Tesseract 与 `chi_sim`、`eng` 模型。
 

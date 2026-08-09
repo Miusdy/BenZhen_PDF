@@ -24,4 +24,4 @@
 
 本地生成的 Apple Silicon DMG 是免费 Release 使用的完整 ad-hoc 签名包，包含 Python 转换核心、Tesseract、所需动态库及中英文模型。它没有 Apple Developer ID 身份和公证票据，用户首次打开时必须按 README 在 macOS 安全设置中明确确认。
 
-当前本机 Homebrew Tahoe OCR bottle 的最高 deployment target 为 macOS 26.4，因此本地测试 DMG 会如实声明需要 macOS 26.4；正式 CI 会拒绝高于 macOS 15.0 的依赖。
+当前本机 Homebrew Tahoe OCR bottle 的最高 deployment target 为 macOS 26.4，因此本地测试 DMG 会如实声明需要 macOS 26.4；正式 CI 只接受 macOS 15.x 依赖，并会把 runner 上 OCR runtime 的精确小版本要求写入发行包。
